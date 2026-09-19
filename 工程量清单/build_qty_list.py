@@ -396,8 +396,9 @@ for idx, res in enumerate(results, 1):
             ws.cell(row=r, column=3, value=part)
             ws.cell(row=r, column=4, value={"m3": "m³", "m2": "㎡", "m": "m", "kg": "kg"}.get(u, u))
             ws.cell(row=r, column=5, value=expr)
+            ws.cell(row=r, column=6, value=round(val, 4) if u != "kg" else round(val, 3))
             r += 1
-        # 汇总行（不写“小计”字样，结果列合并后写入清单工程量）
+        # 汇总行：不写“小计”字样，其余内容保留
         ws.cell(row=r, column=4, value=unit_disp)
         if it["unit"] == "t":
             ws.cell(row=r, column=5, value=f"({' + '.join(fmt(x[2],3) for x in rws)}) ÷ 1000 = {res['qty']:.3f}")
@@ -405,18 +406,16 @@ for idx, res in enumerate(results, 1):
             ws.cell(row=r, column=5, value=f"{fmt(rws[0][2])} ≈ {res['qty']:.2f}")
         else:
             ws.cell(row=r, column=5, value=f"{' + '.join(fmt(x[2]) for x in rws)} = {fmt(res['total'])} ≈ {res['qty']:.2f}")
+        ws.cell(row=r, column=6, value=res["qty"])
         for col in range(1, 7):
             ws.cell(row=r, column=col).fill = FILL
             ws.cell(row=r, column=col).font = FB
         r += 1
         ws.cell(row=start, column=1, value=idx)
         ws.cell(row=start, column=2, value=it["name"])
-        ws.cell(row=start, column=6, value=res["qty"])
-        ws.cell(row=start, column=6).font = FB
         if r - 1 > start:
             ws.merge_cells(start_row=start, start_column=1, end_row=r - 1, end_column=1)
             ws.merge_cells(start_row=start, start_column=2, end_row=r - 1, end_column=2)
-            ws.merge_cells(start_row=start, start_column=6, end_row=r - 1, end_column=6)
     for rr in range(start, r):
         txt = str(ws.cell(row=rr, column=5).value or "")
         lines = max(1, -(-len(txt.encode("gbk", "replace")) // 170))
@@ -427,7 +426,7 @@ for idx, res in enumerate(results, 1):
             if c.font != FB: c.font = F
             c.alignment = LEFT if col in (3, 5) else CENTER
             if col == 6:
-                c.number_format = "0.000" if it["unit"] == "t" else "0.00"
+                c.number_format = "0.000" if (it["unit"] == "t" and rr == r - 1) else ("0.000" if ws.cell(row=rr, column=4).value == "kg" else "0.00##")
 ws.freeze_panes = "A3"
 ws.print_title_rows = "1:2"
 ws.page_setup.orientation = "landscape"; ws.page_setup.paperSize = ws.PAPERSIZE_A4
