@@ -405,9 +405,11 @@ for idx, res in enumerate(results, 1):
             ws.cell(row=r, column=5, value=f"{fmt(rws[0][2])} ≈ {res['qty']:.2f}")
         else:
             ws.cell(row=r, column=5, value=f"{' + '.join(fmt(x[2]) for x in rws)} = {fmt(res['total'])} ≈ {res['qty']:.2f}")
-        for col in range(1, 6):
+        ws.cell(row=r, column=6, value=res["qty"])
+        for col in range(1, 7):
             ws.cell(row=r, column=col).fill = FILL
             ws.cell(row=r, column=col).font = FB
+        sub = r          # 小计行（结果单元格单独保留，不并入上方合并区）
         r += 1
         ws.cell(row=start, column=1, value=idx)
         ws.cell(row=start, column=2, value=it["name"])
@@ -416,7 +418,8 @@ for idx, res in enumerate(results, 1):
         if r - 1 > start:
             ws.merge_cells(start_row=start, start_column=1, end_row=r - 1, end_column=1)
             ws.merge_cells(start_row=start, start_column=2, end_row=r - 1, end_column=2)
-            ws.merge_cells(start_row=start, start_column=6, end_row=r - 1, end_column=6)
+        if sub - 1 > start:
+            ws.merge_cells(start_row=start, start_column=6, end_row=sub - 1, end_column=6)
     for rr in range(start, r):
         txt = str(ws.cell(row=rr, column=5).value or "")
         lines = max(1, -(-len(txt.encode("gbk", "replace")) // 170))
